@@ -10,7 +10,7 @@ import bot_functions
 intents = discord.Intents.default()
 intents.message_content = True
 
-guilds: list = [discord.Object(id=770442539760746526)]#, discord.Object(id=1120012114321494088)]
+guilds: list = [discord.Object(id=770442539760746526), discord.Object(id=1120012114321494088)]
 
 bot: commands.Bot = commands.Bot(command_prefix="!", intents=intents)
 
