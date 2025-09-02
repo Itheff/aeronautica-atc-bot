@@ -50,8 +50,12 @@ async def squawk(ctx: discord.Interaction):
     await ctx.response.send_message(bot_functions.generate_squawk())
 
 @bot.tree.command(name="generate_atis", description="Generates an ATIS from input information", guilds=guilds)
-async def gen_atis(ctx: discord.Interaction):
-    await ctx.response.send_message(bot_functions.generate_atis())
+async def gen_atis(ctx: discord.Interaction, airport: str, wind: str, visibility: str, clouds: str, temp: str, dewpoint: str):
+    atis: str = bot_functions.generate_atis(airport, wind, visibility, clouds, temp, dewpoint)
+    if atis[0:3] == "ERR":
+        await ctx.response.send_message(atis[3:])
+    else:
+        await ctx.response.send_message(bot_functions.generate_atis(airport, wind, visibility, clouds, temp, dewpoint))
 
 @bot.event
 async def on_ready():
