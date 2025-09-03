@@ -1,6 +1,8 @@
 import time
 from random import randint
 from typing import List
+import discord
+from discord import message
 
 class ATIS:
     def __init__(self, airport: str, wind: str, temp: str, dewpoint: str, pressure: str, clouds: str, visibility: str):
@@ -20,12 +22,37 @@ class ATIS:
         self.dispatch_freq: str = "122.800"
         self.pdc: str = "UNAVAIL"
         self.server_code: str = "000000"
+        self.channel: int
+        self.message: int
 
     @staticmethod
     def get_info_letter(info_num: int):
         return chr(ord('a') + info_num).upper()
     
-    def to_string(self):
+    def edit_atis(self, option: str, value: str):
+        match option:
+            case "wind":
+                self.wind = value
+            case "temperature":
+                self.temp = value
+            case "dewpoint":
+                self.dewpoint = value
+            case "pressure":
+                self.pressure = value
+            case "clouds":
+                self.clouds = value
+            case "visibility":
+                self.visibility = value
+            case "dispatch_station":
+                self.dispatch_station = value
+            case "dispatch_frequency":
+                self.dispatch_freq = value
+            case "pdc_availability":
+                self.pdc = value
+            case "server_code":
+                self.server_code = value
+    
+    def to_string(self) -> str:
         if self.fir == "FAA":
             atis: str = "`"
             atis += f"{self.airport} ATIS INFO {ATIS.get_info_letter(self.atis_letter)} {get_time_utc()}"
@@ -43,9 +70,11 @@ class ATIS:
             atis += f"\nADVIS YOU HAVE {ATIS.get_info_letter(self.atis_letter)}`"
             return atis
         elif self.fir == "CAA":
-            pass
+            return "WIP"
         elif self.fir == "ICAO":
-            pass
+            return "WIP"
+        else:
+            return "Error"
 
 def find_frequency(airport: str) -> str:
     if airport.upper() == "KCIA":

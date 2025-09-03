@@ -3,11 +3,11 @@
 
 import discord
 from discord.ext import commands
-import time
-import threading
-from typing import List
+import os
+from typing import List, Literal
 import bot_functions
 import pickle
+import discord.enums
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -75,15 +75,52 @@ async def gen_atis(ctx: discord.Interaction, airport: str, wind: str, temp: str,
     try:
         file = open(f"atis_database/{airport.lower()}.atis", "x")
         file.close()
-        file = open(f"atis_database/{airport.lower()}.atis", "wb")
-        pickle.dump(obj=atis, file=file)
-        await ctx.response.send_message(atis.to_string())
     except FileExistsError as e:
         await ctx.response.send_message(f"An ATIS already exists for {atis.airport.upper()}, try /edit_atis or /delete_atis")
+        return
+    try:
+        response = await ctx.response.send_message(atis.to_string())
+        atis.channel = ctx.channel_id # type: ignore
+        atis.message = response.message_id  # type: ignore
+        file = open(f"atis_database/{airport.lower()}.atis", "wb")
+        pickle.dump(obj=atis, file=file)
+        file.close()
+        return
     except Exception as e:
         print(e)
+        return
+    
+@bot.tree.command(name="delete_atis", description="Deletes an ATIS for an airport", guilds=guilds)
+async def delete_atis(ctx: discord.Interaction, airport: str):
+    if not check_permissions(ctx, perms):
+        await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
+        return
+    if os.path.exists(f"atis_database/{airport.lower()}.atis"):
+        try:
+            os.remove(f"atis_database/{airport.lower()}.atis")
+            await ctx.response.send_message(f"ATIS for {airport.upper()} has been deleted")
+        except Exception as e:
+            await ctx.response.send_message("An unknown error has occured")
+    else:
+        await ctx.response.send_message(f"No ATIS exists for {airport.upper()}, use /generate_atis to create one")
 
-@bot.tree.command(name="say", description="Says something in the provided channel id", guilds=guilds)
+@bot.tree.command(name="edit_atis", description="Edit an already existing ATIS", guilds=guilds)
+async def edit_atis(ctx: discord.Interaction, airport: str, option: Literal["wind", "temperature", "dewpoint", "pressure", "clouds", "visibility", "dispatch_station", "dispatch_frequency", "pdc_availability", "server_code"], value: str, update_letter: bool=False):
+    try:
+        file = open(f"atis_database/{airport.lower()}.atis", "rb")
+        atis: bot_functions.ATIS = pickle.load(file)
+        file.close()
+        file = open(f"atis_database/{airport.lower()}.atis", "wb")
+        pickle.dump(obj=atis, file=file)
+        file.close()
+        atis.edit_atis(option, value)
+        channel = await bot.fetch_channel(atis.channel)
+        message = await channel.fetch_message(atis.message) # type: ignore
+        await message.edit(content=atis.to_string())
+    except Exception as e:
+        raise e
+
+@bot.tree.command(name="say", description="Says something in the provided channel id or in the current channel", guilds=guilds)
 async def say(ctx: discord.Interaction, message: str, channel_id: str="0"):
     if not check_permissions(ctx, perms):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
