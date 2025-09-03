@@ -29,6 +29,7 @@ This command sends "Pong!" to the same channel that the command is run in
 async def ping(ctx: discord.Interaction):
     if not check_permissions(ctx, [1175139363961712730]):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
+        return
     await ctx.response.send_message("Pong!")
 
 """
@@ -38,6 +39,7 @@ This command takes an airport code and returns all positions that could control 
 async def find_frequency(ctx: discord.Interaction, airport: str):
     if not check_permissions(ctx, [1175139363961712730]):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
+        return
     await ctx.response.send_message(bot_functions.find_frequency(airport))
 
 """
@@ -47,6 +49,7 @@ This command returns the time in UTC in the form HHMMz
 async def send_time_utc(ctx: discord.Interaction):
     if not check_permissions(ctx, [1175139363961712730]):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
+        return
     await ctx.response.send_message(bot_functions.get_time_utc())
 
 """
@@ -56,6 +59,7 @@ This command returns a random squawk code, does not check for invalid codes
 async def squawk(ctx: discord.Interaction):
     if not check_permissions(ctx, [1175139363961712730]):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
+        return
     await ctx.response.send_message(bot_functions.generate_squawk())
 
 """
@@ -65,6 +69,7 @@ THis command makes an ATIS based on user given information. It also stores the g
 async def gen_atis(ctx: discord.Interaction, airport: str, wind: str, temp: str, dewpoint: str, pressure:str, clouds: str, visibility: str):
     if not check_permissions(ctx, [1175139363961712730]):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
+        return
     atis: bot_functions.ATIS = bot_functions.ATIS(airport, wind, temp, dewpoint, pressure, clouds, visibility)
     try:
         file = open(f"atis_database/{airport.lower()}.atis", "x")
@@ -81,6 +86,7 @@ async def gen_atis(ctx: discord.Interaction, airport: str, wind: str, temp: str,
 async def say(ctx: discord.Interaction, message: str, channel_id: str="0"):
     if not check_permissions(ctx, [1175139363961712730, 1175139363961712730]):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
+        return
     try:
         channel = None
         if channel_id == "0":
