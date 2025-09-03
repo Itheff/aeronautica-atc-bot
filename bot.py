@@ -13,6 +13,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 guilds: list = [discord.Object(id=1120012114321494088)] #discord.Object(id=770442539760746526),]
 bot: commands.Bot = commands.Bot(command_prefix="!", intents=intents)
+perms = [1175138965054042212, 1175139363961712730]
 
 def check_permissions(ctx: discord.Interaction, roles: List[int]):
     user_roles: List[discord.Role] = ctx.user.roles # type: ignore
@@ -27,7 +28,7 @@ This command sends "Pong!" to the same channel that the command is run in
 """
 @bot.tree.command(name="ping", description="Ping the bot and it will ping back", guilds=guilds)
 async def ping(ctx: discord.Interaction):
-    if not check_permissions(ctx, [1175139363961712730]):
+    if not check_permissions(ctx, perms):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
         return
     await ctx.response.send_message("Pong!")
@@ -37,7 +38,7 @@ This command takes an airport code and returns all positions that could control 
 """
 @bot.tree.command(name="positions", description="Find all the positions that control an airport", guilds=guilds)
 async def find_frequency(ctx: discord.Interaction, airport: str):
-    if not check_permissions(ctx, [1175139363961712730]):
+    if not check_permissions(ctx, perms):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
         return
     await ctx.response.send_message(bot_functions.find_frequency(airport))
@@ -47,7 +48,7 @@ This command returns the time in UTC in the form HHMMz
 """
 @bot.tree.command(name="utc", description="Find the current time in UTC", guilds=guilds)
 async def send_time_utc(ctx: discord.Interaction):
-    if not check_permissions(ctx, [1175139363961712730]):
+    if not check_permissions(ctx, perms):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
         return
     await ctx.response.send_message(bot_functions.get_time_utc())
@@ -57,7 +58,7 @@ This command returns a random squawk code, does not check for invalid codes
 """
 @bot.tree.command(name="squawk", description="Generate a random sqawk code", guilds=guilds)
 async def squawk(ctx: discord.Interaction):
-    if not check_permissions(ctx, [1175139363961712730]):
+    if not check_permissions(ctx, perms):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
         return
     await ctx.response.send_message(bot_functions.generate_squawk())
@@ -67,7 +68,7 @@ THis command makes an ATIS based on user given information. It also stores the g
 """
 @bot.tree.command(name="generate_atis", description="Generates an ATIS from input information", guilds=guilds)
 async def gen_atis(ctx: discord.Interaction, airport: str, wind: str, temp: str, dewpoint: str, pressure:str, clouds: str, visibility: str):
-    if not check_permissions(ctx, [1175139363961712730]):
+    if not check_permissions(ctx, perms):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
         return
     atis: bot_functions.ATIS = bot_functions.ATIS(airport, wind, temp, dewpoint, pressure, clouds, visibility)
@@ -84,7 +85,7 @@ async def gen_atis(ctx: discord.Interaction, airport: str, wind: str, temp: str,
 
 @bot.tree.command(name="say", description="Says something in the provided channel id", guilds=guilds)
 async def say(ctx: discord.Interaction, message: str, channel_id: str="0"):
-    if not check_permissions(ctx, [1175139363961712730, 1175139363961712730]):
+    if not check_permissions(ctx, perms):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
         return
     try:
