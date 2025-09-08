@@ -23,9 +23,6 @@ def check_permissions(ctx: discord.Interaction, roles: List[int]):
                 return True
     return False
 
-"""
-This command sends "Pong!" to the same channel that the command is run in
-"""
 @bot.tree.command(name="ping", description="Ping the bot and it will ping back", guilds=guilds)
 async def ping(ctx: discord.Interaction):
     if not check_permissions(ctx, perms):
@@ -33,9 +30,6 @@ async def ping(ctx: discord.Interaction):
         return
     await ctx.response.send_message("Pong!")
 
-"""
-This command takes an airport code and returns all positions that could control that airport WIP
-"""
 @bot.tree.command(name="positions", description="Find all the positions that control an airport", guilds=guilds)
 async def find_frequency(ctx: discord.Interaction, airport: str):
     if not check_permissions(ctx, perms):
@@ -43,9 +37,6 @@ async def find_frequency(ctx: discord.Interaction, airport: str):
         return
     await ctx.response.send_message(bot_functions.find_frequency(airport))
 
-"""
-This command returns the time in UTC in the form HHMMz
-"""
 @bot.tree.command(name="utc", description="Find the current time in UTC", guilds=guilds)
 async def send_time_utc(ctx: discord.Interaction):
     if not check_permissions(ctx, perms):
@@ -53,9 +44,6 @@ async def send_time_utc(ctx: discord.Interaction):
         return
     await ctx.response.send_message(bot_functions.get_time_utc())
 
-"""
-This command returns a random squawk code, does not check for invalid codes
-"""
 @bot.tree.command(name="squawk", description="Generate a random sqawk code", guilds=guilds)
 async def squawk(ctx: discord.Interaction):
     if not check_permissions(ctx, perms):
@@ -63,15 +51,12 @@ async def squawk(ctx: discord.Interaction):
         return
     await ctx.response.send_message(bot_functions.generate_squawk())
 
-"""
-THis command makes an ATIS based on user given information. It also stores the generated ATIS via pickle.
-"""
 @bot.tree.command(name="generate_atis", description="Generates an ATIS from input information", guilds=guilds)
-async def gen_atis(ctx: discord.Interaction, airport: str, wind: str, temp: str, dewpoint: str, pressure:str, clouds: str, visibility: str):
+async def gen_atis(ctx: discord.Interaction, airport: str, wind: str, temp: str, dewpoint: str, pressure:str, clouds: str, visibility: str, runway: str, dispatch_station: str = "UNICOM", dispatch_frequency: str = "122.800", dep_runway: str = ""):
     if not check_permissions(ctx, perms):
         await ctx.response.send_message("You do not have permission to use this command", ephemeral=True)
         return
-    atis: bot_functions.ATIS = bot_functions.ATIS(airport, wind, temp, dewpoint, pressure, clouds, visibility)
+    atis: bot_functions.ATIS = bot_functions.ATIS(airport, wind, temp, dewpoint, pressure, clouds, visibility, dispatch_station, dispatch_frequency, runway, dep_runway)
     try:
         file = open(f"atis_database/{airport.lower()}.atis", "x")
         file.close()
@@ -117,6 +102,7 @@ async def edit_atis(ctx: discord.Interaction, airport: str, option: Literal["win
         channel = await bot.fetch_channel(atis.channel)
         message = await channel.fetch_message(atis.message) # type: ignore
         await message.edit(content=atis.to_string())
+        await ctx.response.send_message("Value edited successfully", ephemeral=True, delete_after=5)
     except Exception as e:
         raise e
 

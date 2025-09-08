@@ -5,7 +5,7 @@ import discord
 from discord import message
 
 class ATIS:
-    def __init__(self, airport: str, wind: str, temp: str, dewpoint: str, pressure: str, clouds: str, visibility: str):
+    def __init__(self, airport: str, wind: str, temp: str, dewpoint: str, pressure: str, clouds: str, visibility: str, dispatch_station: str, dispatch_frequency: str, runway: str, dep_runway: str):
         self.airport: str = airport.upper()
         self.atis_letter: int = 0
         self.fir: str = get_fir(self.airport)
@@ -15,8 +15,14 @@ class ATIS:
         self.pressure: str = pressure
         self.clouds: str = clouds
         self.visibility: str = visibility
-        self.approach: str = "VISUAL"
         self.runways: List[str] = []
+        self.approach: str
+        if runway.upper()[0:3] == "ILS" or runway.upper()[0:3] == "LOC" or runway.upper()[0:3] == "VOR":
+            self.runways.append(runway[4:])
+            self.approach = runway.upper()[0:3]
+        else:
+            self.runways.append(runway)
+            self.approach = "VISUAL"
         self.dep_runways: List[str] = []
         self.dispatch_station: str = "UNICOM"
         self.dispatch_freq: str = "122.800"
@@ -57,9 +63,9 @@ class ATIS:
             atis: str = "`"
             atis += f"{self.airport} ATIS INFO {ATIS.get_info_letter(self.atis_letter)} {get_time_utc()}"
             atis += f"\n{self.wind}KT {self.visibility}SM {self.clouds} {self.temp}/{self.dewpoint} A{self.pressure}"
-            atis += f"\n{self.approach} APCH "
+            atis += f"\n{self.approach} APCH"
             for runway in self.runways:
-                atis += f"{runway} "
+                atis += f" RWY {runway}"
             if len(self.dep_runways) != 0:
                 f"\nDEP "
                 for runway in self.dep_runways:
