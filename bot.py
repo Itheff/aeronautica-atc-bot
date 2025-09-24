@@ -26,9 +26,9 @@ class Permissions(Enum):
 
 
 
-def check_permissions(ctx: discord.Interaction, roles: List[int]):
+def check_permissions(ctx: discord.Interaction, roles: Permissions):
     user_roles: List[discord.Role] = ctx.user.roles # type: ignore
-    for role in roles:
+    for role in roles.value:
         for user_role in user_roles:
             if user_role.id == role:
                 return True
