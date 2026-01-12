@@ -1,6 +1,6 @@
 import discord.app_commands
 from discord import Interaction, ForumChannel, GroupChannel, CategoryChannel, Interaction, Message
-from .permissions import check_permissions, Permissions
+from .permissions import has_any_role, RoleIDs
 from .metar import Metar
 from typing import Literal, cast
 from random import randint
@@ -140,14 +140,11 @@ class ATIS():
 
 
 @discord.app_commands.command(description="Creates a new airport ATIS")
+@has_any_role(RoleIDs.CONTROLLERS)
 async def generate_atis(ctx: Interaction, airport: str, runways: str, server_code: str, pressure: str, wind: str = "",
                         temperature: str = "", dewpoint: str = "", clouds: str = "", visibility: str = "",
                         departure_runways: str = "", dispatch_station: str = "UNICOM",
                         dispatch_frequency: str = "122.800", transition_level: str = "", pdc: bool = False):
-    
-    # Checking the user has the correct permissions
-    if not await check_permissions(ctx, Permissions.CONTROLLERS_ONLY):
-        return
     
     #Creating the ATIS object
     atis = ATIS(airport, runways, server_code, wind, temperature, dewpoint, pressure, clouds, visibility,
@@ -167,15 +164,12 @@ async def generate_atis(ctx: Interaction, airport: str, runways: str, server_cod
         return
 
 @discord.app_commands.command(description="Edit an already existing ATIS")
+@has_any_role(RoleIDs.CONTROLLERS)
 async def edit_atis(ctx: discord.Interaction, airport: str,
                     option: Literal["wind", "temperature", "dewpoint", "pressure", "clouds", "visibility", "runways",
                                     "departure_runways", "dispatch_station", "dispatch_frequency", "pdc_availability",
                                     "server_code"],
                     value: str, update_letter: bool=False):
-    
-    # Checking the user has the correct permissions
-    if not await check_permissions(ctx, Permissions.CONTROLLERS_ONLY):
-        return
     
     # Loading the ATIS from the database, or informing the user if it does not exist
     try:
@@ -219,10 +213,8 @@ async def edit_atis(ctx: discord.Interaction, airport: str,
         return
 
 @discord.app_commands.command(description="Delete an already existing ATIS")
+@has_any_role(RoleIDs.CONTROLLERS)
 async def delete_atis(ctx: discord.Interaction, airport: str):
-
-    if not await check_permissions(ctx, Permissions.CONTROLLERS_ONLY):
-        return
     
     if os.path.exists(f".atis_database/{airport}.atis"):
         try:
