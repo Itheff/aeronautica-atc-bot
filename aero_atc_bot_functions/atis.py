@@ -1,6 +1,6 @@
 import discord.app_commands
-from discord import Interaction, ForumChannel, GroupChannel, CategoryChannel, Interaction, Message
-from .permissions import has_any_role, RoleIDs
+from discord import ForumChannel, GroupChannel, CategoryChannel, Interaction, Message
+from .permissions import has_role, RoleIDs
 from typing import Literal, cast
 from random import randint
 from time import time, gmtime, strftime
@@ -160,7 +160,7 @@ class ATIS():
 
             # FAA Style ATIS
             case "FAA":
-                atis += f"`{self.airport} ATIS INFO {self.get_atis_letter()} {strftime("%H%MZ", gmtime(time()))}\n"
+                atis += f"`{self.airport} ATIS INFO {self.get_atis_letter()} {strftime('%I:%MZ', gmtime(time()))}\n"
                 atis += self.metar("FAA") + "\n"
                 approach = self.runways[0:3].upper()
                 if approach != "ILS" or approach != "VOR" or approach != "RNV" or approach != "LOC":
@@ -182,7 +182,7 @@ class ATIS():
             
             # CAA Style ATIS
             case "CAA":
-                atis += f"`{self.airport} ATIS INFO {self.get_atis_letter()} TIME {strftime("%H%MZ", gmtime(time()))}\n"
+                atis += f"`{self.airport} ATIS INFO {self.get_atis_letter()} TIME {strftime('%I:%MZ', gmtime(time()))}\n"
                 if self.departure_runways == "":
                     atis += f"DEP RWY {self.runways} ARR RWY {self.runways} IN USE\n"
                 else:
@@ -204,7 +204,7 @@ class ATIS():
 
             # ICAO Style ATIS
             case "ICAO":
-                atis += f"`{self.airport} ATIS {self.get_atis_letter()} {strftime("%H%MZ", gmtime(time()))}\n"
+                atis += f"`{self.airport} ATIS {self.get_atis_letter()} {strftime('%I:%MZ', gmtime(time()))}\n"
                 if self.departure_runways == "":
                     atis += f"DEPARTURES {self.runways}. ARRIVALS {self.runways}\n"
                 else:
@@ -227,7 +227,7 @@ class ATIS():
 # !! There is a lot of string shenanigans going on up there but down here is the real meat and potatoes !!
 
 @discord.app_commands.command(description="Creates a new airport ATIS")
-@has_any_role(RoleIDs.CONTROLLERS)
+@has_role(RoleIDs.CONTROLLER)
 async def generate_atis(ctx: Interaction, airport: str, runways: str, server_code: str, pressure: str, wind: str = "",
                         temperature: str = "", dewpoint: str = "", clouds: str = "", visibility: str = "",
                         departure_runways: str = "", dispatch_station: str = "UNICOM",
@@ -252,7 +252,7 @@ async def generate_atis(ctx: Interaction, airport: str, runways: str, server_cod
         return
 
 @discord.app_commands.command(description="Edit an already existing ATIS")
-@has_any_role(RoleIDs.CONTROLLERS)
+@has_role(RoleIDs.CONTROLLER)
 async def edit_atis(ctx: discord.Interaction, airport: str,
                     option: Literal["wind", "temperature", "dewpoint", "pressure", "clouds", "visibility", "runways",
                                     "departure_runways", "dispatch_station", "dispatch_frequency", "pdc_availability",
@@ -302,7 +302,7 @@ async def edit_atis(ctx: discord.Interaction, airport: str,
         return
 
 @discord.app_commands.command(description="Delete an already existing ATIS")
-@has_any_role(RoleIDs.CONTROLLERS, admin_bypass=True)
+@has_role(RoleIDs.CONTROLLER, admin_bypass=True)
 async def delete_atis(ctx: discord.Interaction, airport: str):
     
     if os.path.exists(f".atis_database/{airport}.json"):
