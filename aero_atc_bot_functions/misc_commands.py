@@ -14,7 +14,7 @@ async def ping(ctx: Interaction):
 @has_any_role(RoleIDs.VERIFIED)
 async def utc(ctx: Interaction):
 
-    await ctx.response.send_message(f"{discord.utils.utcnow().strftime("%H%Mz")}")
+    await ctx.response.send_message(f"{discord.utils.utcnow().strftime('%H%Mz')}")
 
 @discord.app_commands.command(description="Generate a 4 digit squawk code. Does not check for invalid codes")
 @has_any_role(RoleIDs.VERIFIED)

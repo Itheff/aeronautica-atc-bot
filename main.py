@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN: str = os.environ["DISCORD_TOKEN"]
 
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
