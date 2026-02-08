@@ -12,7 +12,7 @@ async def ping(ctx: Interaction):
 @discord.app_commands.command(description="Gives the current time in UTC/GMT")
 @has_role(RoleIDs.VERIFIED)
 async def utc(ctx: Interaction):
-    await ctx.response.send_message(f"{discord.utils.utcnow().strftime('%I:%MZ')}")
+    await ctx.response.send_message(f"{discord.utils.utcnow().strftime('%H%Mz')}")
 
 @discord.app_commands.command(description="Generate a 4 digit squawk code")
 @has_role(RoleIDs.VERIFIED)
