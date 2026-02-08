@@ -11,9 +11,8 @@ import os
 class ATIS():
 
     def __init__(self, airport: str, runways: str, server_code: str, wind: str, temperature: str, dewpoint: str,
-                 pressure: str, weather_observations: str, clouds: str, visibility: str, departure_runways: str,
-                 dispatch_station: str,
-                 dispatch_frequency: str, transition_level: str, pdc: bool, atis_letter: int, message_id: int):
+                 pressure: str, weather_observations: str, clouds: str, visibility: str, departure_runways: str, clearance_station: str,
+                 clearance_frequency: str, transition_level: str, pdc: bool, atis_letter: int, message_id: int):
         self.airport: str = airport.upper()
         self.runways: str = runways.upper()
         self.server_code: str = server_code.upper()
@@ -25,8 +24,8 @@ class ATIS():
         self.clouds: str = clouds
         self.visibility: str = visibility
         self.departure_runways: str = departure_runways.upper()
-        self.dispatch_station: str = dispatch_station.upper()
-        self.dispatch_frequency: str = dispatch_frequency
+        self.clearance_station: str = clearance_station.upper()
+        self.clearance_frequency: str = clearance_frequency
         self.transition_level: str = transition_level
         self.pdc: bool = pdc
         if atis_letter != -1:
@@ -36,7 +35,7 @@ class ATIS():
         self.message_id = message_id
 
     # Eventually this method will automatically find the FIR of an airport based on the ICAO code, TODO
-    def fetch_fir(self) -> Literal["FAA", "CAA", "ICAO"]:
+    def get_fir(self) -> Literal["FAA", "CAA", "ICAO"]:
         return "CAA"
     
     # This method converts an integer 0-25 into the corresponding letter (1 being A, 2 being B and so on)
@@ -66,10 +65,10 @@ class ATIS():
                 self.runways = value
             case "depature_runways":
                 self.departure_runways = value
-            case "dispatch_station":
-                self.dispatch_station = value
-            case "dispatch_frequency":
-                self.dispatch_freq = value
+            case "clearance_station":
+                self.clearance_station = value
+            case "clearance_frequency":
+                self.clearance_freq = value
             case "pdc_availability":
                 if value == "True":
                     self.pdc = True
@@ -98,6 +97,10 @@ class ATIS():
                     metar += "VISIBILITY UNAVAIL "
                 else:
                     metar += f"{self.visibility}SM "
+                if self.weather_observations == "":
+                    pass
+                else:
+                    metar += f"{self.weather_observations} "
                 if self.clouds == "":
                     metar += "CLOUDS UNAVAIL "
                 else:
@@ -117,9 +120,13 @@ class ATIS():
                 else:
                     metar += f"{self.wind}KT "
                 if self.visibility == "":
-                    metar += "//// "
+                    metar += "////M "
                 else:
-                    metar += f"{self.visibility}M "
+                    metar += f"{self.visibility} "
+                if self.weather_observations == "":
+                    pass
+                else:
+                    metar += f"{self.weather_observations} "
                 if self.clouds == "":
                     metar += "////// "
                 else:
@@ -135,23 +142,27 @@ class ATIS():
                 metar += f"QNH {self.pressure}"
             case "ICAO":
                 if self.wind == "":
-                    metar += "WIND UNAVAIL "
+                    metar += "/////KT "
                 else:
                     metar += f"WIND {self.wind}KT "
                 if self.visibility == "":
-                    metar += "VIS UNAVAIL "
+                    metar += "////M "
                 else:
                     metar += f"VIS {self.visibility}M "
+                if self.weather_observations == "":
+                    pass
+                else:
+                    metar += f"{self.weather_observations} "
                 if self.clouds == "":
-                    metar += "CLD UNAVAIL "
+                    metar += "////// "
                 else:
                     metar += f"{self.clouds} "
                 if self.temperature == "":
-                    metar += "T UNAVAIL "
+                    metar += "/// "
                 else:
                     metar += f"T{self.temperature} "
                 if self.dewpoint == "":
-                    metar += "DEWPOINT UNAVAIL "
+                    metar += "// "
                 else:
                     metar += f"D{self.dewpoint} "
                 metar += f"QNH {self.pressure}"
@@ -159,22 +170,22 @@ class ATIS():
     
     def to_string(self) -> str:
         atis: str = ""
-        fir: Literal["FAA", "CAA", "ICAO"] = self.fetch_fir()
+        fir: Literal["FAA", "CAA", "ICAO"] = self.get_fir()
         match fir:
 
             # FAA Style ATIS
             case "FAA":
                 atis += f"`{self.airport} ATIS INFO {self.get_atis_letter()} {strftime('%H%MZ', gmtime(time()))}\n"
                 atis += self.metar("FAA") + "\n"
-                approach = self.runways[0:3].upper()
-                if approach != "ILS" or approach != "VOR" or approach != "RNV" or approach != "LOC":
-                    atis += f"VISUAL APCH RWY(S) {self.runways}\n"
-                else:
+                approach: str = self.runways[0:3].upper()
+                if approach == "ILS" or approach == "VOR" or approach == "RNV" or approach == "LOC":
                     atis += f"{approach} APCH RWY(S) {self.runways[4:]}\n"
+                else:
+                    atis += f"VISUAL APCH RWY(S) {self.runways}\n"
                 if self.departure_runways != "":
                     atis += f"DEP RWY(S) {self.departure_runways}\n"
                 atis += f"READBACK ALL RUNWAY HOLD SHORT INSTRUCTIONS\n"
-                atis += f"CONTACT {self.dispatch_station} ON {self.dispatch_frequency} FOR CLNC\n"
+                atis += f"CONTACT {self.clearance_station} ON {self.clearance_frequency} FOR CLNC\n"
                 atis += f"TEXT PILOTS USE `<#1253808325129408552>` | "
                 if self.pdc:
                     atis += f"PDC AVAIL\n"
@@ -233,14 +244,14 @@ class ATIS():
 @discord.app_commands.command(description="Creates a new airport ATIS")
 @has_role(RoleIDs.CONTROLLER)
 async def generate_atis(ctx: Interaction, airport: str, runways: str, server_code: str, pressure: str,
-                        weather_observations: str, wind: str = "", temperature: str = "", dewpoint: str = "",
+                        weather_observations: str = "", wind: str = "", temperature: str = "", dewpoint: str = "",
                         clouds: str = "", visibility: str = "", departure_runways: str = "",
-                        dispatch_station: str = "UNICOM", dispatch_frequency: str = "122.800",
-                        transition_level: str = "", pdc: bool = False):
+                        clearance_station: str = "UNICOM", clearance_frequency: str = "122.800",
+                        transition_level: str = "6000", pdc: bool = False):
     
     #Creating the ATIS object
     atis = ATIS(airport, runways, server_code, wind, temperature, dewpoint, pressure, weather_observations, clouds,
-                visibility, departure_runways, dispatch_station, dispatch_frequency, transition_level, pdc, 0, 0)
+                visibility, departure_runways, clearance_station, clearance_frequency, transition_level, pdc, 0, 0)
     
     # Dumping the ATIS object into a pickle file for storage in the database
     try:
@@ -260,8 +271,8 @@ async def generate_atis(ctx: Interaction, airport: str, runways: str, server_cod
 @has_role(RoleIDs.CONTROLLER)
 async def edit_atis(ctx: discord.Interaction, airport: str,
                     option: Literal["wind", "temperature", "dewpoint", "pressure", "weather_observations", "clouds",
-                    "visibility", "runways", "departure_runways", "dispatch_station",
-                    "dispatch_frequency", "pdc_availability", "server_code"],
+                                    "visibility", "runways", "departure_runways", "clearance_station",
+                                    "clearance_frequency", "pdc_availability", "server_code"],
                     value: str, update_letter: bool=False):
     
     # Loading the ATIS from the database, or informing the user if it does not exist
