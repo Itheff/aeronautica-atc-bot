@@ -11,7 +11,7 @@ LOG_LEVEL = config["logging"]["level"]
 LOG_FILE = config["logging"]["log_file"]
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN: str = os.environ["DISCORD_TOKEN"]
 
 handler = logging.FileHandler(filename=LOG_FILE, encoding='utf-8', mode='w')
 
