@@ -6,13 +6,14 @@ with open("config.json", "r", encoding="utf-8") as f:
 
 # Using sets for O(1) lookups
 class RoleIDs:
-    AMBASSADOR = {config["permissions"]["ambassador"]}
-    DIRECTOR = {config["permissions"]["director"]}
-    MANAGER = {config["permissions"]["manager"]}
-    ATC_STAFF = {config["permissions"]["atc_staff"]}
-    EVENT_HOST = {config["permissions"]["event_host"]}
-    CONTROLLER = {config["permissions"]["controller"]}
-    VERIFIED = {config["permissions"]["verified"]}
+    AMBASSADOR = {config["aeroPermissions"]["ambassador"]}
+    DIRECTOR = {config["aeroPermissions"]["director"], config["aeroPermissions"]["director"]}
+    MANAGER = {config["aeroPermissions"]["manager"], config["aeroPermissions"]["director"],
+               config["aeroPermissions"]["director"]}
+    ATC_STAFF = {config["aeroPermissions"]["atc_staff"]}
+    EVENT_HOST = {config["aeroPermissions"]["event_host"]}
+    CONTROLLER = {config["aeroPermissions"]["controller"]}
+    VERIFIED = {config["aeroPermissions"]["verified"]}
 
 def has_role(required_role: set, admin_bypass: bool = False):
     async def predicate(ctx: Interaction) -> bool:

@@ -11,8 +11,9 @@ import os
 class ATIS():
 
     def __init__(self, airport: str, runways: str, server_code: str, wind: str, temperature: str, dewpoint: str,
-                 pressure: str, weather_observations: str, clouds: str, visibility: str, departure_runways: str, clearance_station: str,
-                 clearance_frequency: str, transition_level: str, pdc: bool, atis_letter: int, message_id: int):
+                 pressure: str, weather_observations: str, clouds: str, visibility: str, departure_runways: str,
+                 clearance_station: str, clearance_frequency: str, transition_level: str, pdc: bool, atis_letter: int,
+                 message_id: int):
         self.airport: str = airport.upper()
         self.runways: str = runways.upper()
         self.server_code: str = server_code.upper()
@@ -247,7 +248,7 @@ async def generate_atis(ctx: Interaction, airport: str, runways: str, server_cod
                         weather_observations: str = "", wind: str = "", temperature: str = "", dewpoint: str = "",
                         clouds: str = "", visibility: str = "", departure_runways: str = "",
                         clearance_station: str = "UNICOM", clearance_frequency: str = "122.800",
-                        transition_level: str = "6000", pdc: bool = False):
+                        transition_level: str = "7000", pdc: bool = False):
     
     #Creating the ATIS object
     atis = ATIS(airport, runways, server_code, wind, temperature, dewpoint, pressure, weather_observations, clouds,
