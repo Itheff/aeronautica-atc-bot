@@ -6,16 +6,21 @@ with open("config.json", "r", encoding="utf-8") as f:
 
 # Using sets for O(1) lookups
 class RoleIDs:
-    AMBASSADOR = {config["aeroPermissions"]["ambassador"]}
-    DIRECTOR = {config["aeroPermissions"]["ambassador"], config["aeroPermissions"]["director"]}
-    MANAGER = {config["aeroPermissions"]["ambassador"], config["aeroPermissions"]["director"],
-               config["aeroPermissions"]["manager"]}
-    ATC_STAFF = {config["aeroPermissions"]["atc_staff"]}
-    EVENT_HOST = {config["aeroPermissions"]["event_host"]}
-    CONTROLLER = {config["aeroPermissions"]["controller"]}
-    VERIFIED = {config["aeroPermissions"]["verified"]}
+    AMBASSADOR: int = config["permissions"]["ambassador"]
+    DIRECTOR: int = config["permissions"]["director"]
+    MANAGER: int = config["permissions"]["manager"]
+    ATC_STAFF: int = config["permissions"]["atc_staff"]
+    EVENT_HOST: int = config["permissions"]["event_host"]
+    CONTROLLER: int = config["permissions"]["controller"]
+    VERIFIED: int = config["permissions"]["verified"]
 
-def has_role(required_role: set, admin_bypass: bool = False):
+class ChannelIDs:
+    DEBUG: int = config["channels"]["debug"]
+    STAFF_BOT_COMMANDS: int = config["channels"]["staff_bot_commands"]
+    BOT_COMMANDS: int = config["channels"]["bot_commands"]
+    ATIS: int = config["channels"]["atis"]
+
+def has_role(required_roles: set, admin_bypass: bool = False):
     async def predicate(ctx: Interaction) -> bool:
         if not isinstance(ctx.user, Member):
             await ctx.response.send_message("This command must be used in a server", ephemeral=True)
@@ -30,9 +35,18 @@ def has_role(required_role: set, admin_bypass: bool = False):
         user_role_ids: set[int] = {role.id for role in ctx.user.roles}
         
         # Check if there is any overlap (intersection) between user roles and required roles
-        if not user_role_ids.intersection(required_role):
+        if not user_role_ids.intersection(required_roles):
             await ctx.response.send_message("You do not have permission to run this command", ephemeral=True)
             return False
             
         return True
+    return app_commands.check(predicate)
+
+def in_channel(allowed_channels: set[int]):
+    async def predicate(ctx: Interaction) -> bool:
+        if ctx.channel_id in allowed_channels:
+            return True
+        else:
+            await ctx.response.send_message("Command cannot be run in this channel", ephemeral=True)
+            return False
     return app_commands.check(predicate)

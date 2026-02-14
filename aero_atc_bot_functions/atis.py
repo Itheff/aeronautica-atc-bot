@@ -1,6 +1,6 @@
 import discord.app_commands
 from discord import ForumChannel, GroupChannel, CategoryChannel, Interaction, Message
-from .permissions import has_role, RoleIDs
+from .permissions import has_role, in_channel, RoleIDs, ChannelIDs
 from typing import Literal, cast
 from random import randint
 from time import time, gmtime, strftime
@@ -18,18 +18,18 @@ class ATIS():
         self.runways: str = runways.upper()
         self.server_code: str = server_code.upper()
         self.pressure: str = pressure
-        self.weather_observations: str = weather_observations
+        self.weather_observations: str = weather_observations.upper()
         self.wind: str = wind
         self.temperature: str = temperature
         self.dewpoint: str = dewpoint
-        self.clouds: str = clouds
+        self.clouds: str = clouds.upper()
         self.visibility: str = visibility
         self.departure_runways: str = departure_runways.upper()
         self.clearance_station: str = clearance_station.upper()
         self.clearance_frequency: str = clearance_frequency
         self.transition_level: str = transition_level
         self.pdc: bool = pdc
-        if atis_letter != -1:
+        if atis_letter < 0: # an ATIS letter of -1 indicates a newly generated ATIS rather than one being edited
             self.atis_letter: int = randint(0, 25)
         else:
             self.atis_letter = atis_letter
@@ -39,7 +39,7 @@ class ATIS():
     def get_fir(self) -> Literal["FAA", "CAA", "ICAO"]:
         return "CAA"
     
-    # This method converts an integer 0-25 into the corresponding letter (1 being A, 2 being B and so on)
+    # This method converts an integer 0-25 into the corresponding letter (0 being A, 1 being B and so on)
     def get_atis_letter(self) -> str:
         if self.atis_letter > 25:
             self.atis_letter = 0
@@ -240,23 +240,21 @@ class ATIS():
                 atis += f"ACKNOWLEDGE INFO {self.get_atis_letter()} ON FIRST CTC WITH APP OR DEL`"
                 return atis
 
-# !! There is a lot of string shenanigans going on up there but down here is the real meat and potatoes !!
-
+# There is a lot of string shenanigans going on up there but down here is the real meat and potatoes
 @discord.app_commands.command(description="Creates a new airport ATIS")
-@has_role(RoleIDs.CONTROLLER)
+@has_role({RoleIDs.CONTROLLER})
+@in_channel({ChannelIDs.DEBUG, ChannelIDs.ATIS})
 async def generate_atis(ctx: Interaction, airport: str, runways: str, server_code: str, pressure: str,
                         weather_observations: str = "", wind: str = "", temperature: str = "", dewpoint: str = "",
                         clouds: str = "", visibility: str = "", departure_runways: str = "",
                         clearance_station: str = "UNICOM", clearance_frequency: str = "122.800",
                         transition_level: str = "7000", pdc: bool = False):
-    
-    #Creating the ATIS object
-    atis = ATIS(airport, runways, server_code, wind, temperature, dewpoint, pressure, weather_observations, clouds,
-                visibility, departure_runways, clearance_station, clearance_frequency, transition_level, pdc, 0, 0)
-    
-    # Dumping the ATIS object into a pickle file for storage in the database
+
     try:
-        with open(f".atis_database/{airport}.json", "xt") as atis_file:
+        with open(f"atis_database/{airport.upper()}.json", "xt") as atis_file:
+            atis = ATIS(airport, runways, server_code, wind, temperature, dewpoint, pressure, weather_observations,
+                        clouds, visibility, departure_runways, clearance_station, clearance_frequency, transition_level,
+                        pdc, 0, 0)
             await ctx.response.send_message(atis.to_string())
             original_message: discord.InteractionMessage = await ctx.original_response()
             atis.message_id = original_message.id
@@ -269,16 +267,18 @@ async def generate_atis(ctx: Interaction, airport: str, runways: str, server_cod
         return
 
 @discord.app_commands.command(description="Edit an already existing ATIS")
-@has_role(RoleIDs.CONTROLLER)
+@has_role({RoleIDs.CONTROLLER})
 async def edit_atis(ctx: discord.Interaction, airport: str,
                     option: Literal["wind", "temperature", "dewpoint", "pressure", "weather_observations", "clouds",
                                     "visibility", "runways", "departure_runways", "clearance_station",
                                     "clearance_frequency", "pdc_availability", "server_code"],
                     value: str, update_letter: bool=False):
     
+    airport = airport.upper()
+    
     # Loading the ATIS from the database, or informing the user if it does not exist
     try:
-        atis_r_file: BufferedReader = open(f".atis_database/{airport}.json", "rb")
+        atis_r_file: BufferedReader = open(f"atis_database/{airport}.json", "rb")
         atis: ATIS = ATIS(**json.load(atis_r_file))
         atis_r_file.close()
     except FileNotFoundError:
@@ -308,7 +308,7 @@ async def edit_atis(ctx: discord.Interaction, airport: str,
     
     # Re-opening the ATIS database file and rewritting it with the new information
     try:
-        atis_w_file: TextIOWrapper = open(f".atis_database/{airport}.json", "w")
+        atis_w_file: TextIOWrapper = open(f"atis_database/{airport}.json", "w")
         json.dump(atis.__dict__, atis_w_file)
         atis_w_file.close()
         await ctx.response.send_message(f"ATIS for {airport.upper()} has been edited", ephemeral = True)
@@ -319,22 +319,20 @@ async def edit_atis(ctx: discord.Interaction, airport: str,
         return
 
 @discord.app_commands.command(description="Delete an already existing ATIS")
-@has_role(RoleIDs.CONTROLLER, admin_bypass=True)
+@has_role({RoleIDs.CONTROLLER}, admin_bypass=True)
 async def delete_atis(ctx: discord.Interaction, airport: str):
-    
-    if os.path.exists(f".atis_database/{airport}.json"):
+    if os.path.exists(f"atis_database/{airport}.json"):
         try:
-            atis_r_file: BufferedReader = open(f".atis_database/{airport}.json", "rb")
+            atis_r_file: BufferedReader = open(f"atis_database/{airport}.json", "rb")
             atis: ATIS = ATIS(**json.load(atis_r_file))
             # This could cause an error if run in a strange channel type like a forum, pehaps only allow in atis channel
             original_message: discord.Message = await ctx.channel.fetch_message(atis.message_id) #type: ignore
             await original_message.delete()
             atis_r_file.close()
-            os.remove(f".atis_database/{airport.lower()}.json")
+            os.remove(f"atis_database/{airport.lower()}.json")
             await ctx.response.send_message(f"ATIS for {airport.upper()} has been deleted", ephemeral=True)
         except Exception as e:
             await ctx.response.send_message("An unknown error has occured", ephemeral=True)
             print(f"Strange error occured, investigate:\n{e}")
     else:
         await ctx.response.send_message(f"No ATIS found for {airport.upper()}", ephemeral=True)
-# ^!!^ FIX THIS TO MAKE IT MORE ERROR PROOF, TODO ^!!^

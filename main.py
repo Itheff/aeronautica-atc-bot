@@ -7,8 +7,8 @@ import json
 with open("config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
-LOG_LEVEL = config["logging"]["level"]
-LOG_FILE = config["logging"]["log_file"]
+LOG_LEVEL: str = config["logging"]["level"]
+LOG_FILE: str = config["logging"]["log_file"]
 
 load_dotenv()
 TOKEN: str = os.environ["DISCORD_TOKEN"]
